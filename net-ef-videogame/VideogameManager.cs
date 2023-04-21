@@ -41,9 +41,16 @@ namespace net_ef_videogame
                 Console.WriteLine("Invalid input. Please enter a non-empty overview.");
             }
 
+            Console.WriteLine("Software Houses:");
+            var softwareHouses = context.SoftwareHouses.ToList();
+            foreach (var availableSoftwareHouse in softwareHouses)
+            {
+                Console.WriteLine($"[{availableSoftwareHouse.Id}] {availableSoftwareHouse.Name}");
+            }
+
             while (true)
             {
-                Console.Write("Release date (dd-mm-yyyy): ");
+                Console.Write("Release date (dd/MM/yyyy): ");
                 string date = Console.ReadLine() ?? throw new ArgumentNullException(nameof(date));
 
                 if (DateTime.TryParse(date, out releaseDate))
@@ -54,12 +61,12 @@ namespace net_ef_videogame
 
             while (true)
             {
-                Console.Write("Software house ID: ");
+                Console.Write("Choose software house ID: ");
                 string idSoftwareHouse = Console.ReadLine() ?? throw new ArgumentNullException(nameof(idSoftwareHouse));
 
                 if (int.TryParse(idSoftwareHouse, out softwareHouseId))
                 {
-                    var validSoftwareHouse = context.SoftwareHouses.Find(softwareHouseId);
+                    var validSoftwareHouse = softwareHouses.FirstOrDefault(s => s.Id == softwareHouseId);
 
                     if (validSoftwareHouse != null)
                         break;
@@ -117,14 +124,99 @@ namespace net_ef_videogame
 
         public static void SearchVideogameByName()
         {
+            using var context = new VideogameDbContext();
+
+            Console.Write("Insert the name of the videogame to search: ");
+            string searchName = Console.ReadLine() ?? throw new ArgumentNullException(nameof(searchName));
+
+            var videogames = context.Videogames
+                .Where(m => m.Name != null && m.Name.Contains(searchName))
+                .Include(m => m.SoftwareHouse)
+                .ToList();
+
+            if (videogames.Count == 0)
+            {
+                Console.WriteLine($"No videogame found with name '{searchName}'");
+                return;
+            }
+
+            foreach (var videogame in videogames)
+            {
+                videogame.PrintDetails();
+            }
         }
 
         public static void DeleteVideogame()
         {
+            using var context = new VideogameDbContext();
+            Console.Write("Enter the ID of the videogame to delete: ");
+
+            int id;
+            while (true)
+            {
+                string gameId = Console.ReadLine() ?? throw new ArgumentNullException(nameof(gameId));
+
+                if (int.TryParse(gameId, out id))
+                    break;
+
+                Console.WriteLine("Invalid input. Please enter a valid ID.");
+            }
+
+            var videogame = context.Videogames.Find(id);
+
+            if (videogame == null)
+            {
+                Console.WriteLine($"Error: videogame with ID {id} not found");
+                return;
+            }
+
+            context.Videogames.Remove(videogame);
+            context.SaveChanges();
+
+            Console.WriteLine($"Videogame {videogame.Name} with ID {videogame.Id} has been deleted.");
         }
 
         public static void InsertSoftwareHouse()
         {
+            using var context = new VideogameDbContext();
+            Console.WriteLine("Insert the software house details:");
+
+            string name, city;
+
+            while (true)
+            {
+                Console.Write("Name: ");
+                name = Console.ReadLine() ?? throw new ArgumentNullException(nameof(name));
+
+                if (!string.IsNullOrEmpty(name))
+                    break;
+
+                Console.WriteLine("Invalid input. Please enter a non-empty name.");
+            }
+
+            while (true)
+            {
+                Console.Write("City: ");
+                city = Console.ReadLine() ?? throw new ArgumentNullException(nameof(city));
+
+                if (!string.IsNullOrEmpty(city))
+                    break;
+
+                Console.WriteLine("Invalid input. Please enter a non-empty city.");
+            }
+
+            // create a new SoftwareHouse instance
+            var softwareHouse = new SoftwareHouse
+            {
+                Name = name,
+                City = city
+            };
+
+            // add the new SoftwareHouse to the context and save changes to the database
+            context.SoftwareHouses.Add(softwareHouse);
+            context.SaveChanges();
+
+            Console.WriteLine("Software house added successfully");
         }
     }
 }
