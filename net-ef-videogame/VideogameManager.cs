@@ -8,5 +8,24 @@ namespace net_ef_videogame
 {
     internal class VideogameManager
     {
+        public static void InsertVideogame()
+        {
+        }
+
+        public static void SearchVideogameById()
+        {
+        }
+
+        public static void SearchVideogameByName()
+        {
+        }
+
+        public static void DeleteVideogame()
+        {
+        }
+
+        public static void InsertSoftwareHouse()
+        {
+        }
     }
 }
